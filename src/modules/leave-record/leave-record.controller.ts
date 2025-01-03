@@ -33,6 +33,7 @@ export class LeaveRecordController {
 
     const data: LeaveRecordResponseDto[] = leaveRecords.map((leaveRecord) => ({
       id: leaveRecord.id,
+      employee_id: leaveRecord.employee_id,
       reason: leaveRecord.reason,
       start_date: moment(leaveRecord.start_date).format('YYYY-MM-DD'),
       end_date: moment(leaveRecord.end_date).format('YYYY-MM-DD'),
@@ -64,6 +65,7 @@ export class LeaveRecordController {
 
     const data: LeaveRecordResponseDto = {
       id: leaveRecord.id,
+      employee_id: leaveRecord.employee_id,
       reason: leaveRecord.reason,
       start_date: moment(leaveRecord.start_date).format('YYYY-MM-DD'),
       end_date: moment(leaveRecord.end_date).format('YYYY-MM-DD'),
@@ -97,6 +99,7 @@ export class LeaveRecordController {
 
     const data: LeaveRecordResponseDto = {
       id: leaveRecord.id,
+      employee_id: leaveRecord.employee_id,
       reason: leaveRecord.reason,
       start_date: moment(leaveRecord.start_date).format('YYYY-MM-DD'),
       end_date: moment(leaveRecord.end_date).format('YYYY-MM-DD'),
@@ -127,30 +130,31 @@ export class LeaveRecordController {
     @Param('id') id: number,
     @Body() updateLeaveRecordDto: UpdateLeaveRecordDto,
   ) {
-    const employee = await this.leaveRecordService.update(
+    const leaveRecord = await this.leaveRecordService.update(
       id,
       updateLeaveRecordDto,
     );
 
     const data: LeaveRecordResponseDto = {
-      id: employee.id,
-      reason: employee.reason,
-      start_date: moment(employee.start_date).format('YYYY-MM-DD'),
-      end_date: moment(employee.end_date).format('YYYY-MM-DD'),
-      created_at: moment(employee.created_at).format('YYYY-MM-DD HH:mm:ss'),
-      updated_at: moment(employee.updated_at).format('YYYY-MM-DD HH:mm:ss'),
+      id: leaveRecord.id,
+      employee_id: leaveRecord.employee_id,
+      reason: leaveRecord.reason,
+      start_date: moment(leaveRecord.start_date).format('YYYY-MM-DD'),
+      end_date: moment(leaveRecord.end_date).format('YYYY-MM-DD'),
+      created_at: moment(leaveRecord.created_at).format('YYYY-MM-DD HH:mm:ss'),
+      updated_at: moment(leaveRecord.updated_at).format('YYYY-MM-DD HH:mm:ss'),
       employee: {
-        id: employee.employee.id,
-        first_name: employee.employee.first_name,
-        last_name: employee.employee.last_name,
-        email: employee.employee.email,
-        phone_number: employee.employee.phone_number,
-        address: employee.employee.address,
-        gender: employee.employee.gender,
-        created_at: moment(employee.employee.created_at).format(
+        id: leaveRecord.employee.id,
+        first_name: leaveRecord.employee.first_name,
+        last_name: leaveRecord.employee.last_name,
+        email: leaveRecord.employee.email,
+        phone_number: leaveRecord.employee.phone_number,
+        address: leaveRecord.employee.address,
+        gender: leaveRecord.employee.gender,
+        created_at: moment(leaveRecord.employee.created_at).format(
           'YYYY-MM-DD HH:mm:ss',
         ),
-        updated_at: moment(employee.employee.updated_at).format(
+        updated_at: moment(leaveRecord.employee.updated_at).format(
           'YYYY-MM-DD HH:mm:ss',
         ),
       },

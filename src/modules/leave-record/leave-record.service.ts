@@ -131,6 +131,7 @@ export class LeaveRecordService {
   ): Promise<LeaveRecord> {
     const leaveRecord = await this.leaveRecordRepository.findOne({
       where: { id },
+      relations: ['employee'],
     });
 
     if (!leaveRecord) {

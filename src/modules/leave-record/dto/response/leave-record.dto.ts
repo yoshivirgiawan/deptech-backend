@@ -2,6 +2,7 @@ import { EmployeeResponseDto } from './employee.dto';
 
 export class LeaveRecordResponseDto {
   id: number;
+  employee_id: number;
   employee: EmployeeResponseDto;
   reason: string;
   start_date: string;
