@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { LeaveRecord } from './leave-record.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Raw, Repository } from 'typeorm';
+import { Between, Raw, Repository } from 'typeorm';
 import { CreateLeaveRecordDto } from './dto/request/create.dto';
 import { Employee } from '../employee/employee.entity';
 import { UpdateLeaveRecordDto } from './dto/request/update.dto';
@@ -60,11 +64,59 @@ export class LeaveRecordService {
       throw new NotFoundException('Employee not found');
     }
 
+    const { start_date, end_date, employee_id } = createLeaveRecordDto;
+
+    // Validasi cuti dalam 1 tahun
+    const currentYear = new Date().getFullYear();
+    const leaveRecordsInYear = await this.leaveRecordRepository.find({
+      where: {
+        employee_id: employee_id,
+        start_date: Between(
+          new Date(currentYear, 0, 1),
+          new Date(currentYear, 11, 31),
+        ),
+      },
+    });
+
+    const totalLeaveDaysInYear = leaveRecordsInYear.reduce((acc, record) => {
+      const recordDays =
+        (new Date(record.end_date).getTime() -
+          new Date(record.start_date).getTime()) /
+          (1000 * 60 * 60 * 24) +
+        1;
+      return acc + recordDays;
+    }, 0);
+
+    const requestedLeaveDays =
+      (new Date(end_date).getTime() - new Date(start_date).getTime()) /
+        (1000 * 60 * 60 * 24) +
+      1;
+
+    if (totalLeaveDaysInYear + requestedLeaveDays > 12) {
+      throw new BadRequestException(
+        'Employee can only take up to 12 leave days in a year',
+      );
+    }
+
+    // Validasi cuti dalam bulan yang sama
+    const requestedMonth = new Date(start_date).getMonth();
+    const hasLeaveInSameMonth = leaveRecordsInYear.some((record) => {
+      const recordMonth = new Date(record.start_date).getMonth();
+      return recordMonth === requestedMonth;
+    });
+
+    if (hasLeaveInSameMonth) {
+      throw new BadRequestException(
+        'Employee can only take 1 leave day in the same month',
+      );
+    }
+
+    // Simpan data cuti
     const leaveRecord = await this.leaveRecordRepository.save({
-      employee_id: createLeaveRecordDto.employee_id,
+      employee_id,
       reason: createLeaveRecordDto.reason,
-      start_date: createLeaveRecordDto.start_date,
-      end_date: createLeaveRecordDto.end_date,
+      start_date,
+      end_date,
     });
 
     return this.leaveRecordRepository.findOne({
@@ -91,6 +143,56 @@ export class LeaveRecordService {
 
     if (!employee) {
       throw new NotFoundException('Employee not found');
+    }
+
+    const { start_date, end_date, employee_id } = updateLeaveRecordDto;
+
+    // Validasi cuti dalam 1 tahun
+    const currentYear = new Date().getFullYear();
+    const leaveRecordsInYear = await this.leaveRecordRepository.find({
+      where: {
+        employee_id: employee_id,
+        start_date: Between(
+          new Date(currentYear, 0, 1),
+          new Date(currentYear, 11, 31),
+        ),
+      },
+    });
+
+    const totalLeaveDaysInYear = leaveRecordsInYear.reduce((acc, record) => {
+      if (record.id !== id) {
+        const recordDays =
+          (new Date(record.end_date).getTime() -
+            new Date(record.start_date).getTime()) /
+            (1000 * 60 * 60 * 24) +
+          1;
+        return acc + recordDays;
+      }
+      return acc;
+    }, 0);
+
+    const requestedLeaveDays =
+      (new Date(end_date).getTime() - new Date(start_date).getTime()) /
+        (1000 * 60 * 60 * 24) +
+      1;
+
+    if (totalLeaveDaysInYear + requestedLeaveDays > 12) {
+      throw new BadRequestException(
+        'Employee can only take up to 12 leave days in a year',
+      );
+    }
+
+    // Validasi cuti dalam bulan yang sama
+    const requestedMonth = new Date(start_date).getMonth();
+    const hasLeaveInSameMonth = leaveRecordsInYear.some((record) => {
+      const recordMonth = new Date(record.start_date).getMonth();
+      return recordMonth === requestedMonth && record.id !== id;
+    });
+
+    if (hasLeaveInSameMonth) {
+      throw new BadRequestException(
+        'Employee can only take 1 leave day in the same month',
+      );
     }
 
     leaveRecord.employee_id = updateLeaveRecordDto.employee_id;
